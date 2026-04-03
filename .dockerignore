@@ -1,0 +1,14 @@
+.git/
+.gitignore
+.vscode/
+__pycache__/
+*.pyc
+venv/
+env/
+.env
+db.sqlite3
+*.log
+transcript_embeddings.npy
+*.mp4
+*.wav
+*.mp3
