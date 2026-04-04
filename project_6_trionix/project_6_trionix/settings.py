@@ -54,7 +54,7 @@ ROOT_URLCONF = 'project_6_trionix.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [r"login_page",r"project_6_trionix\src"],
+        'DIRS': [os.path.join(BASE_DIR, 'login_page'), os.path.join(BASE_DIR, 'project_6_trionix', 'src')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -117,7 +117,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT=BASE_DIR/'static'
-STATICFILES_DIRS=[r'project_6_trionix\project_6_trionix\static']
+STATICFILES_DIRS=[os.path.join(BASE_DIR, 'project_6_trionix', 'static')]
 
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'data/')
 # MEDIA_URL = '/data/'
