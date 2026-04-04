@@ -8,10 +8,6 @@ pipeline {
         
         // This relies on you saving your Azure details inside Jenkins's "Credentials" manager
         DOCKER_CREDS_ID = 'azure-acr-credentials'  
-        AZURE_SERVICE_PRINCIPAL_ID = 'azure-sp-credentials'
-        
-        AZURE_RESOURCE_GROUP = 'trionix-rg'
-        AZURE_WEB_APP = 'trionix-app'
     }
 
     stages {
@@ -38,18 +34,6 @@ pipeline {
                     bat 'docker login -u %ACR_USERNAME% -p %ACR_PASSWORD% %REGISTRY%'
                     bat 'docker push %REGISTRY%/%IMAGE_NAME%:%BUILD_ID%'
                     bat 'docker push %REGISTRY%/%IMAGE_NAME%:latest'
-                }
-            }
-        }
-
-        stage('Deploy to Azure Web App') {
-            steps {
-                echo "Deploying the new container to Azure..."
-                // We use Azure CLI to restart the app service and pull the new container
-                withCredentials([azureServicePrincipal(credentialsId: "${AZURE_SERVICE_PRINCIPAL_ID}", clientIdVariable: 'CLIENT_ID', clientSecretVariable: 'CLIENT_SECRET', subscriptionIdVariable: 'SUB_ID', tenantIdVariable: 'TENANT_ID')]) {
-                    bat 'az login --service-principal -u %CLIENT_ID% -p %CLIENT_SECRET% --tenant %TENANT_ID%'
-                    bat 'az webapp config container set --name %AZURE_WEB_APP% --resource-group %AZURE_RESOURCE_GROUP% --docker-custom-image-name %REGISTRY%/%IMAGE_NAME%:latest'
-                    bat 'az webapp restart --name %AZURE_WEB_APP% --resource-group %AZURE_RESOURCE_GROUP%'
                 }
             }
         }
