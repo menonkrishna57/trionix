@@ -3,7 +3,7 @@ pipeline {
     
     environment {
         // These are placeholders for your Azure resources
-        REGISTRY = 'youracrname.azurecr.io'  // We will change this once you create an Azure Container Registry
+        REGISTRY = 'trionix.azurecr.io'
         IMAGE_NAME = 'trionix-app'
         
         // This relies on you saving your Azure details inside Jenkins's "Credentials" manager
@@ -11,7 +11,7 @@ pipeline {
         AZURE_SERVICE_PRINCIPAL_ID = 'azure-sp-credentials'
         
         AZURE_RESOURCE_GROUP = 'trionix-rg'
-        AZURE_WEB_APP = 'trionix-production'
+        AZURE_WEB_APP = 'trionix-app'
     }
 
     stages {
