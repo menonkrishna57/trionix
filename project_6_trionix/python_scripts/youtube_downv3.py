@@ -2,7 +2,7 @@ from pytubefix import YouTube
 import os
 # TODO: add audio download
 def download_youtube_audio(link):
-    yt = YouTube(link, 'WEB')
+    yt = YouTube(link, 'ANDROID')
     print(yt.title)
     mypath=os.path.join(os.getcwd(),"project_6_trionix","data")
     audiopath=os.path.join(mypath,f"{yt.title}.mp3")
@@ -15,7 +15,7 @@ def download_youtube_audio(link):
         print("File already exists!")
     return os.path.join(audiopath)
 def download_youtube_video(link):
-    yt = YouTube(link, 'WEB')
+    yt = YouTube(link, 'ANDROID')
     print(yt.title)
     mypath=os.path.join(os.getcwd(),"project_6_trionix","data")
     vidpath=os.path.join(mypath,f"{yt.title}.mp4")
