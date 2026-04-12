@@ -11,6 +11,13 @@ def main(ytlink):
     loaded_sentences,loaded_embeddings,model=ve.main(audio_file)
     return loaded_sentences,loaded_embeddings,model
 
+def main_from_file(file_path):
+    """Process a locally uploaded file (MP4/WAV) instead of a YouTube link."""
+    audio_file=ea.main(file_path)
+    global loaded_sentences,loaded_embeddings,model
+    loaded_sentences,loaded_embeddings,model=ve.main(audio_file)
+    return loaded_sentences,loaded_embeddings,model
+
 
 def myquery(query):
     try:

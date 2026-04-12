@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, FileResponse
+from django.views.decorators.csrf import csrf_exempt
 import requests
+import os
 from python_scripts import youtube_downv3
 from python_scripts import all_con as ac
 
@@ -86,6 +88,25 @@ def upload(request):
     global trans_path
     trans_path=youtube_downv3.download_youtube_video(link)
     transcribe(request)
+
+@csrf_exempt
+def upload_file(request):
+    """Handle uploaded video/audio files and process them through the ML pipeline."""
+    if request.method == 'POST' and request.FILES.get('videoFile'):
+        uploaded_file = request.FILES['videoFile']
+        # Save the uploaded file to the data directory
+        save_dir = os.path.join(os.getcwd(), 'data')
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join(save_dir, uploaded_file.name)
+        with open(file_path, 'wb+') as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+        try:
+            loaded_sentences, loaded_embeddings, model = ac.main_from_file(file_path)
+        except Exception as e:
+            return HttpResponse(f"Error processing file: {e}", status=500)
+        return render(request, 'query.html')
+    return redirect('/')
 
 def ytdownload(request):
     return render(request, 'youtube_downloader.html')

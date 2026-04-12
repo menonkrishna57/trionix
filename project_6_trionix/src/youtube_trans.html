@@ -46,7 +46,12 @@
         </div>
         </form>
         <div class="box-insert">
-            <a href="#">choose a file you want to upload</a>
+            <form method="POST" action="/upload_file/" enctype="multipart/form-data" style="display:flex; align-items:center; gap:15px; width:100%;">
+                {% csrf_token %}
+                <label for="fileUpload" style="cursor:pointer; color:#773ab4; font-weight:700; white-space:nowrap;">Choose a file to upload:</label>
+                <input type="file" id="fileUpload" name="videoFile" accept="video/*,audio/*" style="flex:1;">
+                <button type="submit" class="button-download" style="margin-top:0; width:auto; padding:10px 25px;">Upload & Transcribe</button>
+            </form>
         </div>
     </div>
     </div>

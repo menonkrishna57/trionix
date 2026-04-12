@@ -27,6 +27,7 @@ urlpatterns = [
     path('upload/',views.upload),
     # path('filelink/',views.linkin),
     path('transcribe/',views.transcribe),
+    path('upload_file/',views.upload_file),
     path('ytdownload/',views.ytdownload),
     path('download/',views.download),
     path('audio/',views.audio),

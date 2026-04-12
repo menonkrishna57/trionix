@@ -119,8 +119,12 @@ STATIC_URL = 'static/'
 STATIC_ROOT=BASE_DIR/'static'
 STATICFILES_DIRS=[os.path.join(BASE_DIR, 'project_6_trionix', 'static')]
 
-# MEDIA_ROOT = os.path.join(BASE_DIR, 'data/')
-# MEDIA_URL = '/data/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
+MEDIA_URL = '/data/'
+
+# Allow large file uploads (up to 500MB for video files)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 524288000
+FILE_UPLOAD_MAX_MEMORY_SIZE = 524288000
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
