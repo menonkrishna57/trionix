@@ -70,14 +70,20 @@ def transcribe(request):
     try:
         # global loaded_sentences,loaded_embeddings,model
         user_query=request.GET['linkInput']
-        loaded_sentences,loaded_embeddings,model=ac.main(user_query)
+        print(f"transcribe view called with linkInput={user_query}")
+        # ac.main now indexes the transcript into Qdrant and returns the number of indexed chunks
+        indexed_count = ac.main(user_query)
+        print(f"ac.main returned indexed_count={indexed_count}")
     except AttributeError:
         print("oh damn")
-    return render(request, 'query.html')
+        indexed_count = 0
+    return render(request, 'query.html', {'indexed_count': indexed_count})
 
 def query(request):
     user_query=request.GET['myquery']
+    print(f"query view received myquery={user_query}")
     res=ac.myquery(user_query)
+    print(f"ac.myquery returned: {res}")
     return render(request, 'query.html',{'data': res})
 
 def upload(request):
