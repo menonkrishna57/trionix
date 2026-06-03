@@ -23,13 +23,32 @@ def _make_point_id(source_id: str, chunk_index: int) -> str:
 
 
 def get_client() -> QdrantClient:
-    logger.info("Creating Qdrant client for %s", QDRANT_URL)
-    try:
-        client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
-        return client
-    except Exception as e:
-        logger.exception("Failed to create Qdrant client: %s", e)
-        raise
+    # Try the configured URL first, then fall back to common Docker hostnames
+    candidates = [QDRANT_URL]
+    # Useful on Docker Desktop for host-to-container access
+    if "host.docker.internal" not in QDRANT_URL:
+        candidates.append("http://host.docker.internal:6333")
+    # If Qdrant is running in a container named trionix_qdrant on a user-defined network
+    candidates.append("http://trionix_qdrant:6333")
+
+    last_exc = None
+    for url in candidates:
+        try:
+            print(f"Attempting Qdrant client connection to: {url}")
+            logger.info("Creating Qdrant client for %s", url)
+            client = QdrantClient(url=url, api_key=QDRANT_API_KEY)
+            # perform a lightweight operation to verify connectivity
+            client.get_collections()
+            print(f"Connected to Qdrant at: {url}")
+            logger.info("Connected to Qdrant at: %s", url)
+            return client
+        except Exception as e:
+            last_exc = e
+            logger.warning("Qdrant client connection to %s failed: %s", url, e)
+            print(f"Qdrant connection to {url} failed: {e}")
+
+    logger.exception("Failed to connect to any Qdrant endpoint. Last error: %s", last_exc)
+    raise RuntimeError(f"Failed to connect to Qdrant: {last_exc}")
 
 
 def ensure_collection(collection_name: str = DEFAULT_COLLECTION, vector_size: int = DEFAULT_VECTOR_SIZE):

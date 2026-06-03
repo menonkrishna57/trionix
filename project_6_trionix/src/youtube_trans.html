@@ -39,7 +39,8 @@
             
             please enter the link of the video you want to ask schematic query to
         </div>
-<form class="linkForm" method="GET" action="\transcribe">
+<form class="linkForm" method="POST" action="/search/">
+    {% csrf_token %}
         <div class="youtube-link">
             <input name="linkInput" type="text"  class="text" placeholder="Please enter your video link">
                 <div class="button-box"><button class="button-download">Query</button> </div>
