@@ -67,47 +67,36 @@ def output(request):
 
 def search(request):
     context = {}
-    # On form submission, a new video is transcribed and indexed
-    if request.method == 'POST':
-        video_link = request.POST.get('linkInput')
-        if video_link:
-            print(f"search view received POST with link: {video_link}")
-            # Store the link in the session so we can query it later
-            request.session['video_link'] = video_link
-            
-            # Show a loading screen/message while processing
-            # For now, we process synchronously
-            try:
-                indexed_count = ac.main(video_link)
-                print(f"ac.main returned indexed_count={indexed_count}")
-                context['indexed_count'] = indexed_count
-            except Exception as e:
-                print(f"An error occurred during transcription/indexing: {e}")
-                context['error'] = f"An error occurred: {e}"
-        
-        # After processing, render the query page
+    # Accept both legacy GET submissions and newer POST submissions for indexing
+    video_link = request.POST.get('linkInput') if request.method == 'POST' else request.GET.get('linkInput')
+    if video_link:
+        print(f"search view received {request.method} with link: {video_link}")
+        request.session['video_link'] = video_link
+
+        try:
+            indexed_count = ac.main(video_link)
+            print(f"ac.main returned indexed_count={indexed_count}")
+            context['indexed_count'] = indexed_count
+        except Exception as e:
+            print(f"An error occurred during transcription/indexing: {e}")
+            context['error'] = f"An error occurred: {e}"
+
         return render(request, 'query.html', context)
 
-    # On subsequent GET requests, we perform a search
-    elif request.method == 'GET':
-        user_query = request.GET.get('myquery')
-        video_link = request.session.get('video_link') # Get link from session
+    # Handle query searches independently of whether a video_link is present in session
+    user_query = request.GET.get('myquery')
+    if user_query:
+        print(f"search view received GET with query='{user_query}'")
+        try:
+            results = ac.myquery(user_query)
+            print(f"ac.myquery returned: {results}")
+            context['data'] = results
+            context['last_query'] = user_query
+        except Exception as e:
+            print(f"An error occurred during query: {e}")
+            context['error'] = f"An error occurred during search: {e}"
 
-        if user_query and video_link:
-            print(f"search view received GET with query='{user_query}' for link='{video_link}'")
-            try:
-                # We assume ac.myquery uses the latest indexed data
-                # If not, we might need to pass the video_link or an identifier to it
-                results = ac.myquery(user_query)
-                print(f"ac.myquery returned: {results}")
-                context['data'] = results
-                context['last_query'] = user_query
-            except Exception as e:
-                print(f"An error occurred during query: {e}")
-                context['error'] = f"An error occurred during search: {e}"
-        
-        # If it's just a GET request to the page without a query, just show the page
-        return render(request, 'query.html', context)
+    return render(request, 'query.html', context)
 
     # If it's not a GET or POST, redirect to home
     return redirect('/')

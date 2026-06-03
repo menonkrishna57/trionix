@@ -1,6 +1,7 @@
 import os
 import hashlib
 import logging
+import uuid
 from typing import List, Dict, Any
 
 from qdrant_client import QdrantClient
@@ -11,7 +12,9 @@ if not logger.handlers:
     logging.basicConfig(level=logging.INFO)
 
 
-QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
+# Default to the Qdrant container IP discovered on the current host's Docker bridge network.
+# If you run Qdrant and the web app via docker-compose, set QDRANT_URL in the environment instead.
+QDRANT_URL = os.getenv("QDRANT_URL", "http://172.17.0.3:6333")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", None)
 DEFAULT_COLLECTION = os.getenv("QDRANT_COLLECTION", "trionix-transcripts")
 DEFAULT_VECTOR_SIZE = int(os.getenv("EMBEDDING_DIM", "384"))
@@ -19,12 +22,14 @@ DEFAULT_VECTOR_SIZE = int(os.getenv("EMBEDDING_DIM", "384"))
 
 def _make_point_id(source_id: str, chunk_index: int) -> str:
     key = f"{source_id}:{chunk_index}"
-    return hashlib.sha1(key.encode("utf-8")).hexdigest()
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, key))
 
 
 def get_client() -> QdrantClient:
     # Try the configured URL first, then fall back to common Docker hostnames
     candidates = [QDRANT_URL]
+    # Also try the discovered container IP directly (useful when the web container has QDRANT_URL set to host.docker.internal)
+    candidates.append("http://172.17.0.3:6333")
     # Useful on Docker Desktop for host-to-container access
     if "host.docker.internal" not in QDRANT_URL:
         candidates.append("http://host.docker.internal:6333")
@@ -88,7 +93,8 @@ def search(collection_name: str, query_vector: List[float], top: int = 5):
     client = get_client()
     logger.info("Searching collection '%s' top=%d, query_vector_len=%d", collection_name, top, len(query_vector))
     try:
-        hits = client.search(collection_name=collection_name, query_vector=query_vector, limit=top)
+        response = client.query_points(collection_name=collection_name, query=query_vector, limit=top, with_payload=True)
+        hits = getattr(response, "points", response)
     except Exception as e:
         logger.exception("Search failed: %s", e)
         raise
