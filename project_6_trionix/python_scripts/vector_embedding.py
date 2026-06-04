@@ -32,7 +32,13 @@ def generate_embeddings(sentences, model_name='all-MiniLM-L6-v2'):
     return embeddings, model
 
 
-def index_transcript(transcript_file: str, source_id: Optional[str] = None, collection: str = "trionix-transcripts", model_name: str = 'all-MiniLM-L6-v2') -> int:
+def index_transcript(
+    transcript_file: str,
+    source_id: Optional[str] = None,
+    collection: str = "trionix-transcripts",
+    model_name: str = 'all-MiniLM-L6-v2',
+    replace_collection: bool = False,
+) -> int:
     """Index transcript into Qdrant. Uses transcript_segments.json if present; otherwise falls back to sentence splitting.
 
     Returns the number of points upserted.
@@ -62,9 +68,13 @@ def index_transcript(transcript_file: str, source_id: Optional[str] = None, coll
     embeddings = model.encode(texts)
     logger.info("Embeddings generated: shape=%s", getattr(embeddings, 'shape', None))
 
-    # ensure collection exists
-    logger.info("Ensuring collection '%s' exists", collection)
-    qdrant_store.ensure_collection(collection_name=collection, vector_size=getattr(embeddings, 'shape', [None, None])[1])
+    vector_size = getattr(embeddings, 'shape', [None, None])[1]
+    if replace_collection:
+        logger.info("Replacing collection '%s' before indexing source_id=%s", collection, source_id)
+        qdrant_store.recreate_collection(collection_name=collection, vector_size=vector_size)
+    else:
+        logger.info("Ensuring collection '%s' exists", collection)
+        qdrant_store.ensure_collection(collection_name=collection, vector_size=vector_size)
 
     points = []
     for idx, vec in enumerate(embeddings):

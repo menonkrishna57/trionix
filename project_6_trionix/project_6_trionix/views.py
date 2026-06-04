@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, FileResponse
 import requests
+import re
 from python_scripts import youtube_downv3
 from python_scripts import all_con as ac
 
@@ -67,16 +68,40 @@ def output(request):
 
 def search(request):
     context = {}
+    # derive video_embed from any session-stored video_link (graceful if missing/invalid)
+    def build_youtube_embed(link):
+        if not link:
+            return None
+        m = re.search(r'(?:v=|youtu\.be/|embed/)([A-Za-z0-9_-]{11})', link)
+        if m:
+            return f'https://www.youtube.com/embed/{m.group(1)}'
+        if re.fullmatch(r'[A-Za-z0-9_-]{11}', link):
+            return f'https://www.youtube.com/embed/{link}'
+        return None
+
+    session_video_link = request.session.get('video_link')
+    if session_video_link:
+        embed_url = build_youtube_embed(session_video_link)
+        if embed_url:
+            context['video_embed'] = embed_url
+
     # Accept both legacy GET submissions and newer POST submissions for indexing
     video_link = request.POST.get('linkInput') if request.method == 'POST' else request.GET.get('linkInput')
     if video_link:
         print(f"search view received {request.method} with link: {video_link}")
         request.session['video_link'] = video_link
 
+        # compute embed for immediate render after storing in session
+        embed_now = build_youtube_embed(video_link)
+        if embed_now:
+            context['video_embed'] = embed_now
+
         try:
             indexed_count = ac.main(video_link)
             print(f"ac.main returned indexed_count={indexed_count}")
             context['indexed_count'] = indexed_count
+            # expose original video link for template use
+            context['video_link'] = video_link
         except Exception as e:
             print(f"An error occurred during transcription/indexing: {e}")
             context['error'] = f"An error occurred: {e}"
@@ -92,6 +117,8 @@ def search(request):
             print(f"ac.myquery returned: {results}")
             context['data'] = results
             context['last_query'] = user_query
+            # pass through original source link if available in session
+            context['video_link'] = request.session.get('video_link')
         except Exception as e:
             print(f"An error occurred during query: {e}")
             context['error'] = f"An error occurred during search: {e}"

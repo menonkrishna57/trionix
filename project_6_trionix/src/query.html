@@ -5,53 +5,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>query</title>
-    <link rel="stylesheet" href="{%static 'css/query_real.css' %}">
+    <title>Query</title>
+    <link rel="stylesheet" href="{% static 'css/query_real.css' %}">
 </head>
 <body>
     <header>
         <nav>
             <div class="navbar">
                 <div class="navbar-logo"></div>
+
                 <div class="other-func">
-                    <span class="youtube-down"><a href="\ytdownload">Youtube Downloader</a></span>
-                    <span class="schematic-query"><a href="\">Schematic Query</a></span>
-                    <span class="youtube-down"><a href="\audio">Audio  Downloader</a></span>
+                    <span class="youtube-down"><a href="/ytdownload/">Youtube Downloader</a></span>
+                    <span class="schematic-query"><a href="/">Schematic Query</a></span>
+                    <span class="youtube-down"><a href="/audio/">Audio Downloader</a></span>
                 </div>
+
                 <div class="navbar-menu">
-                    <ul>            
-                        <li><a href="\login">Sign In</a></li>
-                        <li><a href="\signup">Sign Up</a></li>
+                    <ul>
+                        <li><a href="/login/">Sign In</a></li>
+                        <li><a href="/signup/">Sign Up</a></li>
                     </ul>
+                </div>
             </div>
         </nav>
-        </header><main>
-            <div class="together">
-                <!-- <iframe class="video" width="560" height="315" 
-                src="https://www.youtube.com/embed/{% if data %}{{ data }}{% else %}-uleG_Vecis{% endif %}" 
-                title="YouTube video player" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                referrerpolicy="strict-origin-when-cross-origin" 
-                allowfullscreen>
-            </iframe> -->
-            <iframe width="560" height="315" src="https://www.youtube.com/embed/kJQP7kiw5Fk?si=ZkfMDtGrTxOiUSWI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-    <div class="para">
-        <p>    
-    {%if data%}
-    {{data}}
-    {%endif%}
-</p>
-    </div>
-</div>
-<form class="query" method="GET" action="/search/">
-    <div class="entry">
-        
-        <input name="myquery" type="text" class="text" placeholder="Please enter the query">
+    </header>
 
-    <button class="button">submit</button></form>
+    <main>
+        <section class="together">
+            {% if video_embed %}
+                <iframe
+                    class="video"
+                    width="560"
+                    height="315"
+                    src="{{ video_embed }}"
+                    title="YouTube video player"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen>
+                </iframe>
+            {% endif %}
 
-</div>
-</main>
+            <div class="para">
+                {% if video_link %}
+                    <p>
+                        Original video:
+                        <a href="{{ video_link }}" target="_blank" rel="noopener">Open on YouTube</a>
+                    </p>
+                {% endif %}
+
+                {% if data %}
+                    <ul>
+                        {% for r in data %}
+                            <li>
+                                <div><strong>{{ r.rank }}. {{ r.text }}</strong></div>
+                                <div style="font-size: 0.9em; color: #555;">
+                                    Score: {{ r.score|floatformat:3 }}
+                                    {% if r.start %}
+                                        &nbsp;-&nbsp;
+                                        <a href="#" class="start-link" data-start="{{ r.start }}">
+                                            Start at <span class="start-label">{{ r.start }}</span>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </section>
+
+        <form class="query" method="GET" action="/search/">
+            <div class="entry">
+                <input
+                    name="myquery"
+                    type="text"
+                    class="text"
+                    placeholder="Please enter the query"
+                    value="{{ last_query|default:'' }}">
+                <button class="button" type="submit">Submit</button>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        // Convert seconds to mm:ss and make start links open the original video at timestamp.
+        document.addEventListener('DOMContentLoaded', function () {
+            function formatTime(seconds) {
+                var totalSeconds = parseInt(seconds, 10) || 0;
+                var minutes = Math.floor(totalSeconds / 60);
+                var remainingSeconds = totalSeconds % 60;
+                return (
+                    (minutes < 10 ? '0' + minutes : minutes) +
+                    ':' +
+                    (remainingSeconds < 10 ? '0' + remainingSeconds : remainingSeconds)
+                );
+            }
+
+            document.querySelectorAll('.start-link').forEach(function (link) {
+                var start = link.getAttribute('data-start');
+                var label = link.querySelector('.start-label');
+                var baseUrl = '{{ video_link|default:""|escapejs }}';
+
+                if (label) {
+                    label.textContent = formatTime(start);
+                }
+
+                if (!baseUrl) {
+                    return;
+                }
+
+                link.href = baseUrl + (baseUrl.indexOf('?') === -1 ? '?' : '&') + 't=' + start;
+                link.target = '_blank';
+                link.rel = 'noopener';
+            });
+        });
+    </script>
 </body>
 </html>

@@ -70,6 +70,50 @@ def ensure_collection(collection_name: str = DEFAULT_COLLECTION, vector_size: in
         logger.info("Collection '%s' created", collection_name)
 
 
+def recreate_collection(collection_name: str = DEFAULT_COLLECTION, vector_size: int = DEFAULT_VECTOR_SIZE):
+    client = get_client()
+    logger.info("Recreating collection '%s' (vector_size=%s)", collection_name, vector_size)
+    client.recreate_collection(
+        collection_name=collection_name,
+        vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
+    )
+    logger.info("Collection '%s' recreated", collection_name)
+
+
+def get_source_summary(collection_name: str = DEFAULT_COLLECTION, batch_size: int = 100):
+    client = get_client()
+    source_ids = set()
+    point_count = 0
+    offset = None
+
+    try:
+        while True:
+            points, next_offset = client.scroll(
+                collection_name=collection_name,
+                limit=batch_size,
+                offset=offset,
+                with_payload=True,
+                with_vectors=False,
+            )
+            point_count += len(points)
+
+            for point in points:
+                payload = point.payload or {}
+                source_id = payload.get("source_id")
+                if source_id:
+                    source_ids.add(source_id)
+
+            if next_offset is None:
+                break
+
+            offset = next_offset
+    except Exception as e:
+        logger.info("Could not read source summary for collection '%s': %s", collection_name, e)
+        return set(), 0
+
+    return source_ids, point_count
+
+
 def upsert_points(collection_name: str, points: List[Dict[str, Any]]):
     """Points should be a list of dicts with keys: id (str), vector (List[float]), payload (dict)
 
