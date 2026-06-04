@@ -54,7 +54,8 @@ def index_transcript(
                 segments = None
 
     if segments:
-        texts = [s.get('text','').strip() for s in segments if s.get('text','').strip()]
+        segments = [s for s in segments if s.get('text','').strip()]
+        texts = [s.get('text','').strip() for s in segments]
     else:
         text = load_transcript(transcript_file)
         texts = process_sentences(text)

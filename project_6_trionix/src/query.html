@@ -34,10 +34,12 @@
         <section class="together">
             {% if video_embed %}
                 <iframe
+                    id="video-preview"
                     class="video"
                     width="560"
                     height="315"
                     src="{{ video_embed }}"
+                    data-base-src="{{ video_embed }}"
                     title="YouTube video player"
                     frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -102,6 +104,8 @@
                 );
             }
 
+            var videoPreview = document.getElementById('video-preview');
+
             document.querySelectorAll('.start-link').forEach(function (link) {
                 var start = link.getAttribute('data-start');
                 var label = link.querySelector('.start-label');
@@ -111,11 +115,19 @@
                     label.textContent = formatTime(start);
                 }
 
-                if (!baseUrl) {
-                    return;
-                }
+                link.addEventListener('click', function (event) {
+                    if (!videoPreview) {
+                        return;
+                    }
 
-                link.href = baseUrl + (baseUrl.indexOf('?') === -1 ? '?' : '&') + 't=' + start;
+                    event.preventDefault();
+                    var previewBaseUrl = videoPreview.getAttribute('data-base-src');
+                    videoPreview.src = previewBaseUrl + '?start=' + parseInt(start, 10) + '&autoplay=1';
+                });
+
+                if (baseUrl) {
+                    link.href = baseUrl + (baseUrl.indexOf('?') === -1 ? '?' : '&') + 't=' + start;
+                }
                 link.target = '_blank';
                 link.rel = 'noopener';
             });
