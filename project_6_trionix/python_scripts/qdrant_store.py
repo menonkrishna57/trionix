@@ -58,8 +58,10 @@ def get_client() -> QdrantClient:
             logger.warning("Qdrant client connection to %s failed: %s", url, e)
             print(f"Qdrant connection to {url} failed: {e}")
 
-    logger.exception("Failed to connect to any Qdrant endpoint. Last error: %s", last_exc)
-    raise RuntimeError(f"Failed to connect to Qdrant: {last_exc}")
+    logger.exception("Failed to connect to any Qdrant endpoint. Last error: %s. Falling back to in-memory.", last_exc)
+    print("Failed to connect to any Qdrant endpoint. Falling back to in-memory QdrantClient(':memory:')")
+    _client_cache = QdrantClient(location=":memory:")
+    return _client_cache
 
 
 def ensure_collection(collection_name: str = DEFAULT_COLLECTION, vector_size: int = DEFAULT_VECTOR_SIZE):

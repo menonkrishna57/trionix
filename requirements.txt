@@ -8,6 +8,5 @@ yt-dlp
 pyzbar==0.1.9
 Requests==2.32.3
 scikit_learn==1.6.1
-sentence_transformers==3.4.0
 SpeechRecognition==3.14.1
 qdrant-client

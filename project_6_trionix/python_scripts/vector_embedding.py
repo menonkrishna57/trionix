@@ -1,6 +1,6 @@
 import numpy as np 
 import re
-from sentence_transformers import SentenceTransformer
+import requests
 from sklearn.metrics.pairwise import cosine_similarity
 import os
 import json
@@ -15,10 +15,31 @@ if not logger.handlers:
 
 _model_cache = {}
 
-def get_model(model_name: str) -> SentenceTransformer:
+class HFModel:
+    def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
+        if "/" not in model_name:
+            model_name = f"sentence-transformers/{model_name}"
+        self.api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{model_name}"
+        self.api_key = os.getenv("HF_API_KEY")
+
+    def encode(self, texts: List[str]) -> np.ndarray:
+        headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+        all_embeddings = []
+        batch_size = 50
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i+batch_size]
+            response = requests.post(self.api_url, headers=headers, json={"inputs": batch})
+            if response.status_code == 200:
+                all_embeddings.extend(response.json())
+            else:
+                logger.error(f"HF API Error: {response.text}")
+                raise Exception(f"HF API Error: {response.text}")
+        return np.array(all_embeddings)
+
+def get_model(model_name: str) -> HFModel:
     if model_name not in _model_cache:
-        logger.info("Loading SentenceTransformer model: %s", model_name)
-        _model_cache[model_name] = SentenceTransformer(model_name)
+        logger.info("Loading HuggingFace API model wrapper: %s", model_name)
+        _model_cache[model_name] = HFModel(model_name)
     return _model_cache[model_name]
 
 def load_transcript(file_path):
