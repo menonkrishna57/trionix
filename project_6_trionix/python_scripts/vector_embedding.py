@@ -13,6 +13,14 @@ logger = logging.getLogger(__name__)
 if not logger.handlers:
     logging.basicConfig(level=logging.INFO)
 
+_model_cache = {}
+
+def get_model(model_name: str) -> SentenceTransformer:
+    if model_name not in _model_cache:
+        logger.info("Loading SentenceTransformer model: %s", model_name)
+        _model_cache[model_name] = SentenceTransformer(model_name)
+    return _model_cache[model_name]
+
 def load_transcript(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         text = file.read()
@@ -27,7 +35,7 @@ def process_sentences(text):
     return sentences
 
 def generate_embeddings(sentences, model_name='all-MiniLM-L6-v2'):
-    model = SentenceTransformer(model_name)
+    model = get_model(model_name)
     embeddings = model.encode(sentences)
     return embeddings, model
 
@@ -64,7 +72,7 @@ def index_transcript(
         source_id = os.path.splitext(os.path.basename(transcript_file))[0]
 
     logger.info("Using %d chunks for indexing (source_id=%s)", len(texts), source_id)
-    model = SentenceTransformer(model_name)
+    model = get_model(model_name)
     logger.info("Generating embeddings using model %s...", model_name)
     embeddings = model.encode(texts)
     logger.info("Embeddings generated: shape=%s", getattr(embeddings, 'shape', None))
@@ -102,7 +110,7 @@ def index_transcript(
 
 def search_qdrant(query: str, collection: str = "trionix-transcripts", model_name: str = 'all-MiniLM-L6-v2', top_n: int = 5) -> List[Dict[str, Any]]:
     logger.info("Search requested: '%s' (collection=%s, top_n=%d)", query, collection, top_n)
-    model = SentenceTransformer(model_name)
+    model = get_model(model_name)
     qvec = model.encode([query])[0]
     logger.info("Query vector generated (len=%d)", len(qvec))
     hits = qdrant_store.search(collection_name=collection, query_vector=qvec, top=top_n)

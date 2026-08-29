@@ -1,0 +1,8 @@
+venv/
+env/
+data/
+__pycache__/
+*.sqlite3
+.vscode/
+.git/
+transcript_embeddings.npy

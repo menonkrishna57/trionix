@@ -3,3 +3,4 @@ project_6_trionix/python_scripts/__pycache__/
 *.py[cod]
 *$py.class
 project_6_trionix/data/
+*.sqlite3

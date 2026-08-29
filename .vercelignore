@@ -1,0 +1,11 @@
+venv/
+env/
+data/
+__pycache__/
+*.sqlite3
+.vscode/
+.git/
+transcript_embeddings.npy
+project_6_trionix/env/
+project_6_trionix/data/
+project_6_trionix/venv/

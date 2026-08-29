@@ -14,10 +14,11 @@ if not logger.handlers:
 
 # Default to the Qdrant container IP discovered on the current host's Docker bridge network.
 # If you run Qdrant and the web app via docker-compose, set QDRANT_URL in the environment instead.
-QDRANT_URL = os.getenv("QDRANT_URL", "http://172.17.0.3:6333")
+QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333/")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", None)
 DEFAULT_COLLECTION = os.getenv("QDRANT_COLLECTION", "trionix-transcripts")
 DEFAULT_VECTOR_SIZE = int(os.getenv("EMBEDDING_DIM", "384"))
+_client_cache = None
 
 
 def _make_point_id(source_id: str, chunk_index: int) -> str:
@@ -26,6 +27,10 @@ def _make_point_id(source_id: str, chunk_index: int) -> str:
 
 
 def get_client() -> QdrantClient:
+    global _client_cache
+    if _client_cache is not None:
+        return _client_cache
+
     # Try the configured URL first, then fall back to common Docker hostnames
     candidates = [QDRANT_URL]
     # Also try the discovered container IP directly (useful when the web container has QDRANT_URL set to host.docker.internal)
@@ -46,7 +51,8 @@ def get_client() -> QdrantClient:
             client.get_collections()
             print(f"Connected to Qdrant at: {url}")
             logger.info("Connected to Qdrant at: %s", url)
-            return client
+            _client_cache = client
+            return _client_cache
         except Exception as e:
             last_exc = e
             logger.warning("Qdrant client connection to %s failed: %s", url, e)
