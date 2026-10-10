@@ -1,6 +1,9 @@
 import assemblyai as aai
 import os
 import json
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
 
 def _milliseconds_to_seconds(value):
@@ -71,7 +74,7 @@ def _build_segments(transcript):
 
 
 def main(filelink):    
-    aai.settings.api_key = "ce8209cdfb214d80b63881d941a2b015"
+    aai.settings.api_key = os.environ.get("ASSEMBLYAI_API_KEY")
     transcriber = aai.Transcriber()
     file_path=os.path.join(os.getcwd(),"data","processed")
     os.makedirs(file_path, exist_ok=True)
